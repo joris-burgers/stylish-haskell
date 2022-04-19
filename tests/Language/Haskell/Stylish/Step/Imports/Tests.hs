@@ -70,6 +70,10 @@ tests = testGroup "Language.Haskell.Stylish.Step.Imports.Tests"
     , testCase "case 36" case36
     , testCase "case 37" case37
     , testCase "case 38" case38
+    , testCase "case 39" case39
+    , testCase "case 40" case40
+    , testCase "case 41" case41
+    , testCase "case 42" case42
     ]
 
 
@@ -198,7 +202,7 @@ case07 = assertSnippet (step (Just 80) $ fromImportAlign File)
 case08 :: Assertion
 case08 =
   let
-    options = Options Global WithAlias True Inline Inherit (LPConstant 4) True False False
+    options = Options Global WithAlias True Inline Inherit (LPConstant 4) True False False False
   in
     assertSnippet (step (Just 80) options) input
     [ "module Herp where"
@@ -222,7 +226,7 @@ case08 =
 case08b :: Assertion
 case08b =
   let
-    options = Options Global WithModuleName True Inline Inherit (LPConstant 4) True False False
+    options = Options Global WithModuleName True Inline Inherit (LPConstant 4) True False False False
   in
     assertSnippet (step (Just 80) options) input
     ["module Herp where"
@@ -245,7 +249,7 @@ case08b =
 case09 :: Assertion
 case09 =
   let
-    options = Options Global WithAlias True Multiline Inherit (LPConstant 4) True False False
+    options = Options Global WithAlias True Multiline Inherit (LPConstant 4) True False False False
   in
     assertSnippet (step (Just 80) options) input
     [ "module Herp where"
@@ -280,7 +284,7 @@ case09 =
 case10 :: Assertion
 case10 =
   let
-    options = Options Group WithAlias True Multiline Inherit (LPConstant 4) True False False
+    options = Options Group WithAlias True Multiline Inherit (LPConstant 4) True False False False
   in
     assertSnippet (step (Just 40) options) input
     [ "module Herp where"
@@ -321,7 +325,7 @@ case10 =
 case11 :: Assertion
 case11 =
   let
-    options = Options Group NewLine True Inline Inherit (LPConstant 4) True False False
+    options = Options Group NewLine True Inline Inherit (LPConstant 4) True False False False
   in
     assertSnippet (step (Just 80) options) input
     [ "module Herp where"
@@ -348,7 +352,7 @@ case11 =
 case11b :: Assertion
 case11b =
   let
-    options = Options Group WithModuleName True Inline Inherit (LPConstant 4) True False False
+    options = Options Group WithModuleName True Inline Inherit (LPConstant 4) True False False False
   in
     assertSnippet (step (Just 80) options) input
     [ "module Herp where"
@@ -371,7 +375,7 @@ case11b =
 case12 :: Assertion
 case12 =
   let
-    options = Options Group NewLine True Inline Inherit (LPConstant 2) True False False
+    options = Options Group NewLine True Inline Inherit (LPConstant 2) True False False False
   in
     assertSnippet (step (Just 80) options)
     [ "import Data.List (map)"
@@ -385,7 +389,7 @@ case12 =
 case12b :: Assertion
 case12b =
   let
-    options = Options Group WithModuleName True Inline Inherit (LPConstant 2) True False False
+    options = Options Group WithModuleName True Inline Inherit (LPConstant 2) True False False False
   in
     assertSnippet (step (Just 80) options)
     ["import Data.List (map)"]
@@ -396,7 +400,7 @@ case12b =
 case13 :: Assertion
 case13 =
   let
-    options = Options None WithAlias True InlineWithBreak Inherit (LPConstant 4) True False False
+    options = Options None WithAlias True InlineWithBreak Inherit (LPConstant 4) True False False False
   in
     assertSnippet (step (Just 80) options)
     [ "import qualified Data.List as List (concat, foldl, foldr, head, init,"
@@ -410,7 +414,7 @@ case13 =
 case13b :: Assertion
 case13b =
   let
-    options = Options None WithModuleName True InlineWithBreak Inherit (LPConstant 4) True False False
+    options = Options None WithModuleName True InlineWithBreak Inherit (LPConstant 4) True False False False
   in
     assertSnippet (step (Just 80) options)
     [ "import qualified Data.List as List (concat, foldl, foldr, head, init,"
@@ -426,7 +430,7 @@ case13b =
 case14 :: Assertion
 case14 =
   let
-    options = Options None WithAlias True InlineWithBreak Inherit (LPConstant 10) True False False
+    options = Options None WithAlias True InlineWithBreak Inherit (LPConstant 10) True False False False
   in
     assertSnippet (step (Just 80) options)
     [ "import qualified Data.List as List (concat, map, null, reverse, tail, (++))"
@@ -439,7 +443,7 @@ case14 =
 case15 :: Assertion
 case15 =
   let
-    options = Options None AfterAlias True Multiline Inherit (LPConstant 4) True False False
+    options = Options None AfterAlias True Multiline Inherit (LPConstant 4) True False False False
   in
     assertSnippet (step (Just 80) options)
     [ "import Data.Acid (AcidState)"
@@ -464,7 +468,7 @@ case15 =
 case16 :: Assertion
 case16 =
   let
-    options = Options None AfterAlias True Multiline Inherit (LPConstant 4) False False False
+    options = Options None AfterAlias True Multiline Inherit (LPConstant 4) False False False False
   in
     assertSnippet (step (Just 80) options)
     [ "import Data.Acid (AcidState)"
@@ -487,7 +491,7 @@ case16 =
 case17 :: Assertion
 case17 =
   let
-    options = Options None AfterAlias True Multiline Inherit (LPConstant 4) True False False
+    options = Options None AfterAlias True Multiline Inherit (LPConstant 4) True False False False
   in
     assertSnippet (step (Just 80) options)
     [ "import Control.Applicative (Applicative ((<*>),pure))"
@@ -504,7 +508,7 @@ case17 =
 case18 :: Assertion
 case18 =
   let
-    options = Options None AfterAlias True InlineToMultiline Inherit (LPConstant 4) True False False
+    options = Options None AfterAlias True InlineToMultiline Inherit (LPConstant 4) True False False False
   in
     assertSnippet (step (Just 40) options)
     [ "import Data.Foo as Foo (Bar, Baz, Foo)"
@@ -531,7 +535,7 @@ case18 =
 case19 :: Assertion
 case19 =
   let
-    options = Options Global NewLine True InlineWithBreak RightAfter (LPConstant 17) True False False
+    options = Options Global NewLine True InlineWithBreak RightAfter (LPConstant 17) True False False False
   in
     assertSnippet (step (Just 40) options) case19input
        ----------------------------------------
@@ -547,7 +551,7 @@ case19 =
 case19b :: Assertion
 case19b =
   let
-    options = Options File NewLine True InlineWithBreak RightAfter (LPConstant 17) True False False
+    options = Options File NewLine True InlineWithBreak RightAfter (LPConstant 17) True False False False
   in
     assertSnippet (step (Just 40) options) case19input
        ----------------------------------------
@@ -562,7 +566,7 @@ case19b =
 case19c :: Assertion
 case19c =
   let
-    options = Options File NewLine True InlineWithBreak RightAfter LPModuleName True False False
+    options = Options File NewLine True InlineWithBreak RightAfter LPModuleName True False False False
   in
     assertSnippet (step (Just 40) options) case19input
        ----------------------------------------
@@ -577,7 +581,7 @@ case19c =
 case19d :: Assertion
 case19d =
   let
-    options = Options Global NewLine True InlineWithBreak RightAfter LPModuleName True False False
+    options = Options Global NewLine True InlineWithBreak RightAfter LPModuleName True False False False
   in
     assertSnippet (step (Just 40) options) case19input
        ----------------------------------------
@@ -669,7 +673,7 @@ case22 = assertSnippet (step (Just 80) defaultOptions)
 case23 :: Assertion
 case23 =
   let
-    options = Options None AfterAlias False Inline Inherit (LPConstant 4) True True False
+    options = Options None AfterAlias False Inline Inherit (LPConstant 4) True True False False
   in
     assertSnippet (step (Just 40) options)
     [ "import Data.Acid (AcidState)"
@@ -694,7 +698,7 @@ case23 =
 case23b :: Assertion
 case23b =
   let
-    options = Options None WithModuleName False Inline Inherit (LPConstant 4) True True False
+    options = Options None WithModuleName False Inline Inherit (LPConstant 4) True True False False
   in
     assertSnippet (step (Just 40) options)
     [ "import Data.Acid (AcidState)"
@@ -720,7 +724,7 @@ case23b =
 case24 :: Assertion
 case24 =
   let
-    options = Options None AfterAlias False InlineWithBreak Inherit (LPConstant 4) True True False
+    options = Options None AfterAlias False InlineWithBreak Inherit (LPConstant 4) True True False False
   in
     assertSnippet (step (Just 40) options)
     [ "import Data.Acid (AcidState)"
@@ -744,7 +748,7 @@ case24 =
 case25 :: Assertion
 case25 =
   let
-    options = Options Group AfterAlias False Multiline Inherit (LPConstant 4) False False False
+    options = Options Group AfterAlias False Multiline Inherit (LPConstant 4) False False False False
   in
     assertSnippet (step (Just 80) options)
     [ "import Data.Acid (AcidState)"
@@ -930,3 +934,111 @@ case38 = assertSnippet (step (Just 80) $ fromImportAlign File)
     [ "import Happstack.Server"
     , "import HSP"
     ]
+
+--------------------------------------------------------------------------------
+case39 :: Assertion
+case39 = assertSnippet (step Nothing options)
+  [ "import Something.A"
+  , "import SomethingElse.A"
+  , "import SomeThing.B"
+  , "import SomeThingelse.B"
+  ]
+  [ "import           Something.A"
+  , "import           SomeThing.B"
+  , ""
+  , "import           SomethingElse.A"
+  , "import           SomeThingelse.B"
+  ]
+  where options = defaultOptions { groupImports = True }
+
+--------------------------------------------------------------------------------
+case40 :: Assertion
+case40 = assertSnippet (step Nothing options)
+    [ "import Data.Default.Class (Default(def))"
+    , "import qualified Data.Aeson as JSON"
+    , "import qualified Data.Aeson as JSON"
+    , "import Control.Monad"
+    , "import Control.Monad"
+    , ""
+    , "import Data.Maybe (Maybe   (Just, Nothing))"
+    , "import qualified Data.Maybe.Extra (Maybe(Just, Nothing))"
+    , ""
+    , "import Data.Foo (Foo (Foo,Bar), Goo(Goo))"
+    , "import Data.Foo (Foo (Foo,Bar))"
+    , "import Data.Set (empty, intersect)"
+    , "import Data.Set (empty, nub)"
+    ]
+    [ "import Control.Monad"
+    , ""
+    , "import Data.Aeson         qualified as JSON"
+    , "import Data.Default.Class (Default (def))"
+    , "import Data.Foo           (Foo (Bar, Foo), Goo (Goo))"
+    , "import Data.Maybe         (Maybe (Just, Nothing))"
+    , "import Data.Maybe.Extra   qualified (Maybe (Just, Nothing))"
+    , "import Data.Set           (empty, intersect, nub)"
+    ]
+  where options = defaultOptions { groupImports = True, postQualified = True }
+
+--------------------------------------------------------------------------------
+case41 :: Assertion
+case41 = assertSnippet (step Nothing options)
+    [ "import Data.Default.Class (Default(def))"
+    , "import qualified Data.Aeson as JSON"
+    , "import Control.Monad"
+    , "import Control.Monad"
+    , "import qualified Foo.Bar.Baz"
+    , ""
+    , "import Data.Set (empty, intersect)"
+    , "import Data.Maybe (Maybe   (Just, Nothing))"
+    , "import qualified Data.Maybe.Extra (Maybe(Just, Nothing))"
+    , ""
+    , "import qualified Data.Aeson as JSON"
+    , ""
+    , "import Data.Foo (Foo (Foo,Bar), Goo(Goo))"
+    , "import Data.Foo (Foo (Foo,Bar))"
+    , "import Data.Set (empty, nub)"
+    , "import Foo.Bar.Baz (Foo)"
+    ]
+    [ "import Control.Monad"
+    , ""
+    , "import qualified Data.Aeson         as JSON"
+    , "import           Data.Default.Class (Default (def))"
+    , "import           Data.Foo           (Foo (Bar, Foo), Goo (Goo))"
+    , "import           Data.Maybe         (Maybe (Just, Nothing))"
+    , "import qualified Data.Maybe.Extra   (Maybe (Just, Nothing))"
+    , "import           Data.Set           (empty, intersect, nub)"
+    , ""
+    , "import           Foo.Bar.Baz (Foo)"
+    , "import qualified Foo.Bar.Baz"
+    ]
+  where options = defaultOptions { groupImports = True, importAlign = Group }
+
+--------------------------------------------------------------------------------
+case42 :: Assertion
+case42 =
+    assertSnippet (step (Just 80) options)
+    [ "import Data.Acid (AcidState)"
+    , "import Data.Default.Class (Default (def))"
+    , "import Control.Monad"
+    , ""
+    , "import qualified Data.Acid as Acid (closeAcidState, createCheckpoint, openLocalStateFrom)"
+    , ""
+    , "import qualified Herp.Derp.Internal.Types.Foobar as Internal (foo, bar)"
+    ]
+    [ "import Control.Monad"
+    , ""
+    , "import Data.Acid (AcidState)"
+    , "import qualified Data.Acid as Acid"
+    , "    ( closeAcidState"
+    , "    , createCheckpoint"
+    , "    , openLocalStateFrom"
+    , "    )"
+    , "import Data.Default.Class (Default (def))"
+    , ""
+    , "import qualified Herp.Derp.Internal.Types.Foobar as Internal (bar, foo)"
+    ]
+  where options = defaultOptions
+          { groupImports  = True
+          , importAlign   = None
+          , longListAlign = Multiline
+          }

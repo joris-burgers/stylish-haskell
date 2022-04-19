@@ -294,6 +294,31 @@ steps:
       # Default: false
       post_qualify: false
 
+      # Automatically group imports by the first part of each module's
+      # name, with a blank line separating each group. Groups are
+      # ordered in alphabetical order.
+      #
+      # When enabled, this rewrites existing blank lines and groups.
+      #
+      # - true: Group imports by the first part of the module name.
+      #
+      #   > import Control.Applicative
+      #   > import Control.Monad
+      #   > import Control.Monad.MonadError
+      #   >
+      #   > import Data.Functor
+      #
+      # - false: Keep import groups as-is (still sorting and
+      #   formatting the imports within each group)
+      #
+      #   > import Control.Monad
+      #   > import Data.Functor
+      #   >
+      #   > import Control.Applicative
+      #   > import Control.Monad.MonadError
+      #
+      # Default: false
+      group_imports: false
 
   # Language pragmas
   - language_pragmas:
