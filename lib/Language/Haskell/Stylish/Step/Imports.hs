@@ -1,8 +1,10 @@
-{-# LANGUAGE BlockArguments  #-}
-{-# LANGUAGE DoAndIfThenElse #-}
-{-# LANGUAGE LambdaCase      #-}
-{-# LANGUAGE RecordWildCards #-}
-{-# LANGUAGE ViewPatterns    #-}
+{-# LANGUAGE BlockArguments    #-}
+{-# LANGUAGE DoAndIfThenElse   #-}
+{-# LANGUAGE FlexibleContexts  #-}
+{-# LANGUAGE LambdaCase        #-}
+{-# LANGUAGE NamedFieldPuns    #-}
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE RecordWildCards   #-}
 module Language.Haskell.Stylish.Step.Imports
   ( Options (..)
   , defaultOptions
@@ -17,17 +19,23 @@ module Language.Haskell.Stylish.Step.Imports
   ) where
 
 --------------------------------------------------------------------------------
-import           Control.Monad                     (forM_, void, when)
+import           Control.Monad                     (MonadPlus (mzero), forM_,
+                                                    void, when)
+import qualified Data.Aeson                        as A
 import           Data.Char                         (toLower)
+import           Data.Either                       (fromRight)
 import           Data.Foldable                     (toList)
 import           Data.Function                     (on, (&))
 import           Data.Functor                      (($>))
-import           Data.List                         (groupBy, sortBy, intercalate)
+import           Data.List                         (groupBy, intercalate,
+                                                    partition, sortBy, sortOn)
 import           Data.List.NonEmpty                (NonEmpty (..))
 import qualified Data.List.NonEmpty                as NonEmpty
 import qualified Data.Map                          as Map
 import           Data.Maybe                        (fromMaybe, isJust)
 import qualified Data.Set                          as Set
+import           Data.String                       (IsString (fromString))
+import qualified Data.Text                         as T
 import qualified GHC.Data.FastString               as GHC
 import qualified GHC.Hs                            as GHC
 import qualified GHC.Types.Name.Reader             as GHC
@@ -35,7 +43,10 @@ import qualified GHC.Types.SourceText              as GHC
 import qualified GHC.Types.SrcLoc                  as GHC
 import qualified GHC.Unit.Module.Name              as GHC
 import qualified GHC.Unit.Types                    as GHC
-
+import           Text.Regex.TDFA                   (Regex,
+                                                    RegexMaker (makeRegex),
+                                                    getAllTextSubmatches, match)
+import           Text.Regex.TDFA.ReadRegex         (parseRegex)
 
 --------------------------------------------------------------------------------
 import           Language.Haskell.Stylish.Block
@@ -45,7 +56,6 @@ import           Language.Haskell.Stylish.Ordering
 import           Language.Haskell.Stylish.Printer
 import           Language.Haskell.Stylish.Step
 import           Language.Haskell.Stylish.Util
-
 
 --------------------------------------------------------------------------------
 data Options = Options
@@ -59,6 +69,7 @@ data Options = Options
     , spaceSurround  :: Bool
     , postQualified  :: Bool
     , groupImports   :: Bool
+    , groupPatterns  :: [Pattern]
     } deriving (Eq, Show)
 
 defaultOptions :: Options
@@ -73,6 +84,7 @@ defaultOptions = Options
     , spaceSurround   = False
     , postQualified   = False
     , groupImports    = False
+    , groupPatterns   = ["([^.]+)"]
     }
 
 data ListPadding
@@ -107,6 +119,27 @@ data LongListAlign
     | Multiline -- multiline
     deriving (Eq, Show)
 
+data Pattern = Pattern
+  { regex  :: Regex
+  , string :: String
+  }
+
+instance Show Pattern where show = show . string
+
+instance Eq Pattern where (==) = (==) `on` string
+
+instance IsString Pattern where
+  fromString = either error id . parsePattern
+
+instance A.FromJSON Pattern where
+  parseJSON = \case
+    A.String string -> fromRight mzero (pure <$> parsePattern (T.unpack string))
+    _               -> mzero
+
+parsePattern :: String -> Either String Pattern
+parsePattern string = case parseRegex string of
+  Right _  -> Right $ Pattern { string, regex = makeRegex string }
+  Left err -> Left (show err)
 
 --------------------------------------------------------------------------------
 step :: Maybe Int -> Options -> Step
@@ -181,8 +214,7 @@ groupAndFormat maxCols options moduleStats groups = edits
           intercalate [""] $
           map (formatImports maxCols options moduleStats) grouped
 
-        grouped = map NonEmpty.fromList $ groupBy ((==) `on` firstPart) sorted
-        sorted = sortBy (compareImports `on` GHC.unLoc) imports
+        grouped = groupByPatterns (groupPatterns options) imports
         imports = concatMap toList groups
 
         block = Block
@@ -191,12 +223,40 @@ groupAndFormat maxCols options moduleStats groups = edits
         src = fromMaybe (error "regroupImports: missing location") .
           GHC.srcSpanToRealSrcSpan . GHC.getLocA
 
-        -- returns in all lowecase for case-insensitive comparison
-        firstPart (importModuleName . GHC.unLoc -> name) =
-          case split '.' name of
-            (part : _) -> map toLower part
-            [] ->
-              error ("Could not split imported module name: " <> name)
+groupByPatterns
+  :: [Pattern]
+  -> [GHC.LImportDecl GHC.GhcPs]
+  -> [NonEmpty (GHC.LImportDecl GHC.GhcPs)]
+groupByPatterns patterns allImports = go patterns allImports []
+  where
+    go [] [] groups            = groups
+    go [] imports groups       = groups <> [NonEmpty.fromList imports]
+    go (p : ps) imports groups =
+      let
+        (groups', rest) = extract p imports
+      in
+        go ps rest (groups <> groups')
+
+    extract p imports =
+      let
+        (matched, rest) =
+          partition (matches p) imports
+        subgroups =
+          groupBy ((==) `on` capture p) $ sortOn (capture p) matched
+      in
+        (map NonEmpty.fromList subgroups, rest)
+
+    matches :: Pattern -> GHC.LImportDecl GHC.GhcPs -> Bool
+    matches Pattern { regex } import_ = match regex $ moduleName import_
+
+    capture :: Pattern -> GHC.LImportDecl GHC.GhcPs -> String
+    capture Pattern { regex } import_ =
+      case getAllTextSubmatches $ match regex $ moduleName import_ of
+        []      -> ""            -- all put in a single group
+        (s : _) -> map toLower s -- lowercase for case-insensitive sorting
+
+    moduleName = importModuleName . GHC.unLoc
+
 
 --------------------------------------------------------------------------------
 printQualified
@@ -519,10 +579,3 @@ nubOn f = go Set.empty
     | otherwise          = x : go (Set.insert y acc) xs
    where
     y = f x
-
-split :: Eq a => a -> [a] -> [[a]]
-split separator = \case
-  [] -> []
-  ls ->
-    let (x, xs) = break (== separator) ls
-    in x : split separator (drop 1 xs)

@@ -368,6 +368,8 @@ steps:
       # The default is ["([^.])+"] which means "group everything based
       # on the first component of the module name" (Control.*
       # together, Data.* together... etc).
+      #
+      # Default: ["([^.])+"]
       group_patterns: ["([^.])+"]
 
   # Language pragmas
