@@ -294,9 +294,13 @@ steps:
       # Default: false
       post_qualify: false
 
-      # Automatically group imports by the first part of each module's
-      # name, with a blank line separating each group. Groups are
-      # ordered in alphabetical order.
+      # Automatically group imports based on their module names, with
+      # a blank line separating each group. Groups are ordered in
+      # alphabetical order.
+      #
+      # By default, this groups by the first part of each module's
+      # name (Control.* will be grouped together, Data.*... etc), but
+      # this can be configured with the group_patterns setting.
       #
       # When enabled, this rewrites existing blank lines and groups.
       #
@@ -319,6 +323,52 @@ steps:
       #
       # Default: false
       group_imports: false
+
+      # A list of regular expressions specifying how to group modules
+      # and how to order the groups.
+      #
+      # Each pattern defines a single group. An import belongs to the
+      # first group where the pattern matches the name of the module
+      # being imported. Matches can be partial; to require matching
+      # the entire module name, you can use ^ and $ in the pattern (eg
+      # "^pattern$").
+      #
+      # Example: ["Test\\.", "Foo\\."] will put all test imports into
+      # a single group, followed by a group for Foo.*, followed by
+      # anything else:
+      #
+      #  > import Test.Foo.A
+      #  > import Test.Foo.B
+      #  > import Test.Bar
+      #  > import Test.Baz.Qux
+      #  >
+      #  > import Foo.A
+      #  > import Foo.B
+      #  >
+      #  > import Control.Applicative
+      #  > import Data.Map
+      #
+      # If a pattern uses a capture group, imports that match the
+      # pattern are broken up into further groups based on the
+      # captured text. The sub-groups are sorted relative to each
+      # other in alphabetical order by the captured text.
+      #
+      # Example: "Test\\.([^.]+)" will produce sub-groups as follows:
+      #
+      #   > import Test.Bar
+      #   >
+      #   > import Test.Baz.Qux
+      #   >
+      #   > import Test.Foo.A
+      #   > import Test.Foo.B
+      #
+      # Any imports that do not match a pattern will be combined at a
+      # group at the end of the import block.
+      #
+      # The default is ["([^.])+"] which means "group everything based
+      # on the first component of the module name" (Control.*
+      # together, Data.* together... etc).
+      group_patterns: ["([^.])+"]
 
   # Language pragmas
   - language_pragmas:
