@@ -78,6 +78,7 @@ tests = testGroup "Language.Haskell.Stylish.Step.Imports.Tests"
     , testCase "case 43" case43
     , testCase "case 44a" case44a
     , testCase "case 44b" case44b
+    , testCase "case 44c" case44c
     ]
 
 
@@ -1208,18 +1209,48 @@ case44b =
     [ "import Project"
     , "import Project.Something"
     , ""
-    , "import Control.Monad"
-    , ""
     , "import qualified Data.Acid as Acid"
     , ""
     , "import Data.Default.Class (Default (def))"
     , ""
     , "import qualified Herp.Derp.Internal.Types.Foobar as Internal (bar, foo)"
     , ""
+    , "import Control.Monad"
+    , ""
     , "import ProJect.WrongCapitalization"
     ]
   where options = defaultOptions
           { groupImports  = True
           , groupPatterns = ["Project", "[^.]+\\.([^.]+)"]
+          , importAlign   = None
+          }
+
+
+--------------------------------------------------------------------------------
+case44c :: Assertion
+case44c =
+    assertSnippet (step (Just 80) options)
+    [ "import Project"
+    , "import Control.Monad"
+    , ""
+    , "import qualified Data.Acid as Acid"
+    , "import Project.Something"
+    , "import Data.Default.Class (Default (def))"
+    , ""
+    , "import qualified Herp.Derp.Internal.Types.Foobar as Internal (foo, bar)"
+    , "import ProJect.WrongCapitalization"
+    ]
+    [ "import Project"
+    , "import Project.Something"
+    , ""
+    , "import Control.Monad"
+    , "import qualified Data.Acid as Acid"
+    , "import Data.Default.Class (Default (def))"
+    , "import qualified Herp.Derp.Internal.Types.Foobar as Internal (bar, foo)"
+    , "import ProJect.WrongCapitalization"
+    ]
+  where options = defaultOptions
+          { groupImports  = True
+          , groupPatterns = ["Project", "[^.]+\\.[^.]+"]
           , importAlign   = None
           }
