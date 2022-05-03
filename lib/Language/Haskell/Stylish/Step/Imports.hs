@@ -35,7 +35,7 @@ import           Data.List                         (groupBy, intercalate,
 import           Data.List.NonEmpty                (NonEmpty (..))
 import qualified Data.List.NonEmpty                as NonEmpty
 import qualified Data.Map                          as Map
-import           Data.Maybe                        (fromMaybe, isJust)
+import           Data.Maybe                        (fromMaybe, isJust, mapMaybe)
 import qualified Data.Set                          as Set
 import qualified Data.Text                         as T
 import qualified GHC.Data.FastString               as GHC
@@ -266,7 +266,9 @@ groupByPatterns patterns allImports = go patterns allImports []
         subgroups =
           groupBy ((==) `on` capture p) $ sortOn (capture p) matched
       in
-        (map NonEmpty.fromList subgroups, rest)
+        -- groupBy never produces empty groups, so this mapMaybe will
+        -- not discard anything from subgroups
+        (mapMaybe NonEmpty.nonEmpty subgroups, rest)
 
     matches :: Pattern -> GHC.LImportDecl GHC.GhcPs -> Bool
     matches Pattern { regex } import_ = match regex $ moduleName import_
