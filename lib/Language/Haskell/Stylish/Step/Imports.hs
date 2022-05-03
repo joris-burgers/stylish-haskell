@@ -33,6 +33,8 @@ import           Data.List.NonEmpty                (NonEmpty (..))
 import qualified Data.List.NonEmpty                as NonEmpty
 import qualified Data.Map                          as Map
 import           Data.Maybe                        (fromMaybe, isJust, mapMaybe)
+import           Data.Sequence                     (Seq ((:|>)))
+import qualified Data.Sequence                     as Seq
 import qualified Data.Set                          as Set
 import qualified Data.Text                         as T
 import qualified GHC.Data.FastString               as GHC
@@ -244,23 +246,24 @@ groupAndFormat
 groupAndFormat _ _ _ [] = mempty
 groupAndFormat maxCols options moduleStats groups =
   Editor.changeLines block (const regroupedLines)
-  where regroupedLines :: Lines
-        regroupedLines = intercalate [""] $
-          map (formatImports maxCols options moduleStats) grouped
+  where
+    regroupedLines :: Lines
+    regroupedLines = intercalate [""] $
+      map (formatImports maxCols options moduleStats) grouped
 
-        grouped :: [NonEmpty (GHC.LImportDecl GHC.GhcPs)]
-        grouped = groupByPatterns (groupPatterns options) imports
+    grouped :: [NonEmpty (GHC.LImportDecl GHC.GhcPs)]
+    grouped = groupByPatterns (groupPatterns options) imports
 
-        imports :: [GHC.LImportDecl GHC.GhcPs]
-        imports = concatMap toList groups
+    imports :: [GHC.LImportDecl GHC.GhcPs]
+    imports = concatMap toList groups
 
-        -- groups is non-empty by the pattern for this case and
-        -- imports is non-empty as long as groups is non-empty
-        block = Block
-          (GHC.srcSpanStartLine . src $ head imports)
-          (GHC.srcSpanEndLine   . src $ last imports)
-        src = fromMaybe (error "regroupImports: missing location") .
-          GHC.srcSpanToRealSrcSpan . GHC.getLocA
+    -- groups is non-empty by the pattern for this case
+    -- imports is non-empty as long as groups is non-empty
+    block = Block
+      (GHC.srcSpanStartLine . src $ head imports)
+      (GHC.srcSpanEndLine   . src $ last imports)
+    src = fromMaybe (error "regroupImports: missing location") .
+      GHC.srcSpanToRealSrcSpan . GHC.getLocA
 
 -- | Group imports based on a list of patterns.
 --
@@ -274,16 +277,25 @@ groupByPatterns
   -> [GHC.LImportDecl GHC.GhcPs]
   -- ^ The imports to group. Order does not matter.
   -> [NonEmpty (GHC.LImportDecl GHC.GhcPs)]
-groupByPatterns patterns allImports = go patterns allImports []
+groupByPatterns patterns allImports = toList $ go patterns allImports Seq.empty
   where
+    go :: [Pattern]
+       -> [GHC.LImportDecl GHC.GhcPs]
+       -> Seq (NonEmpty (GHC.LImportDecl GHC.GhcPs))
+       -> Seq (NonEmpty (GHC.LImportDecl GHC.GhcPs))
     go [] [] groups            = groups
-    go [] imports groups       = groups <> [NonEmpty.fromList imports]
+    go [] imports groups       = groups :|> NonEmpty.fromList imports
     go (p : ps) imports groups =
       let
         (groups', rest) = extract p imports
       in
         go ps rest (groups <> groups')
 
+    extract :: Pattern
+            -> [GHC.LImportDecl GHC.GhcPs]
+            -> ( Seq (NonEmpty (GHC.LImportDecl GHC.GhcPs))
+               , [GHC.LImportDecl GHC.GhcPs]
+               )
     extract p imports =
       let
         (matched, rest) =
@@ -293,7 +305,7 @@ groupByPatterns patterns allImports = go patterns allImports []
       in
         -- groupBy never produces empty groups, so this mapMaybe will
         -- not discard anything from subgroups
-        (mapMaybe NonEmpty.nonEmpty subgroups, rest)
+        (Seq.fromList $ mapMaybe NonEmpty.nonEmpty subgroups, rest)
 
     matches :: Pattern -> GHC.LImportDecl GHC.GhcPs -> Bool
     matches Pattern { regex } import_ = match regex $ moduleName import_
