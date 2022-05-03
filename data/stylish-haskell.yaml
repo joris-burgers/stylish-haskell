@@ -329,13 +329,13 @@ steps:
       #
       # Each pattern defines a single group. An import belongs to the
       # first group where the pattern matches the name of the module
-      # being imported. Matches can be partial; to require matching
-      # the entire module name, you can use ^ and $ in the pattern (eg
-      # "^pattern$").
+      # being imported.
       #
-      # Example: ["Test\\.", "Foo\\."] will put all test imports into
-      # a single group, followed by a group for Foo.*, followed by
-      # anything else:
+      # Example: ["^Test\\.", "^Foo\\."] will put all test imports
+      # into a single group, followed by a group for Foo.*, followed
+      # by anything else. (Note: . in a regular expression matches
+      # *any* character, so we have to escape it with \\ to match the
+      # literal dot in the module name.)
       #
       #  > import Test.Foo.A
       #  > import Test.Foo.B
@@ -348,9 +348,20 @@ steps:
       #  > import Control.Applicative
       #  > import Data.Map
       #
+      # A pattern only needs to match part of the module name, which
+      # could be in the middle. You can use ^pattern to anchor to the
+      # beginning of the module name, pattern$ to anchor to the end
+      # and ^pattern$ to force a full match. Example:
+      #
+      #  - "Test\\." would match "Test.Foo" and "Foo.Test.Lib"
+      #  - "^Test\\." would match "Test.Foo" but not "Foo.Test.Lib"
+      #  - "\\.Test$" would match "Foo.Test" but not "Foo.Test.Lib"
+      #  - "^Test$" would *only* match "Test"
+      #
       # If a pattern uses a capture group, imports that match the
-      # pattern are broken up into further groups based on the
-      # captured text. The sub-groups are sorted relative to each
+      # pattern are broken up into further groups based on the text
+      # captured by the first capture group. Any subsequent capture
+      # groups are ignored. The sub-groups are sorted relative to each
       # other in alphabetical order by the captured text.
       #
       # Example: "Test\\.([^.]+)" will produce sub-groups as follows:
@@ -361,6 +372,10 @@ steps:
       #   >
       #   > import Test.Foo.A
       #   > import Test.Foo.B
+      #
+      # Note: if a capture group is repeated, only the *last* instance
+      # of the group is captured. This means that "([^.]+\\.)+" will
+      # capture "Bar." out of "Foo.Bar.Baz".
       #
       # Any imports that do not match a pattern will be combined at a
       # group at the end of the import block.
