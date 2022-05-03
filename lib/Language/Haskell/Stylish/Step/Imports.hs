@@ -121,9 +121,16 @@ data LongListAlign
     | Multiline -- multiline
     deriving (Eq, Show)
 
+-- | A compiled regular expression. Provides instances that 'Regex'
+-- does not have (eg 'Show', 'Eq' and 'FromJSON').
+--
+-- Construct with 'parsePattern' to maintain the invariant that
+-- 'string' is the exact regex string used to compile 'regex'.
 data Pattern = Pattern
   { regex  :: Regex
+    -- ^ The compiled regular expression.
   , string :: String
+    -- ^ The valid regex string that 'regex' was compiled from.
   }
 
 instance Show Pattern where show = show . string
@@ -224,6 +231,11 @@ formatImports maxCols options moduleStats rawGroup =
 
 
 --------------------------------------------------------------------------------
+-- | Reorganize imports into groups based on 'groupPatterns', then
+-- format each group as specified by the rest of 'Options'.
+--
+-- Note: this will discard blank lines and comments inside the imports
+-- section.
 groupAndFormat
   :: Maybe Int
   -> Options
@@ -245,9 +257,17 @@ groupAndFormat maxCols options moduleStats groups = edits
         src = fromMaybe (error "regroupImports: missing location") .
           GHC.srcSpanToRealSrcSpan . GHC.getLocA
 
+-- | Group imports based on a list of patterns.
+--
+-- See the documentation for @group_patterns@ in
+-- @data/stylish-haskell.yaml@ for details about the patterns and
+-- grouping logic.
 groupByPatterns
   :: [Pattern]
+  -- ^ The patterns specifying the groups to build. Order matters:
+  -- earlier patterns take precedence over later ones.
   -> [GHC.LImportDecl GHC.GhcPs]
+  -- ^ The imports to group. Order does not matter.
   -> [NonEmpty (GHC.LImportDecl GHC.GhcPs)]
 groupByPatterns patterns allImports = go patterns allImports []
   where
