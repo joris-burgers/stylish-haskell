@@ -1,10 +1,9 @@
-{-# LANGUAGE BlockArguments    #-}
-{-# LANGUAGE DoAndIfThenElse   #-}
-{-# LANGUAGE FlexibleContexts  #-}
-{-# LANGUAGE LambdaCase        #-}
-{-# LANGUAGE NamedFieldPuns    #-}
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE RecordWildCards   #-}
+{-# LANGUAGE BlockArguments   #-}
+{-# LANGUAGE DoAndIfThenElse  #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE LambdaCase       #-}
+{-# LANGUAGE NamedFieldPuns   #-}
+{-# LANGUAGE RecordWildCards  #-}
 module Language.Haskell.Stylish.Step.Imports
   ( Options (..)
   , defaultOptions
@@ -22,11 +21,9 @@ module Language.Haskell.Stylish.Step.Imports
   ) where
 
 --------------------------------------------------------------------------------
-import           Control.Monad                     (MonadPlus (mzero), forM_,
-                                                    void, when)
+import           Control.Monad                     (forM_, void, when)
 import qualified Data.Aeson                        as A
 import           Data.Char                         (toLower)
-import           Data.Either                       (fromRight)
 import           Data.Foldable                     (toList)
 import           Data.Function                     (on, (&))
 import           Data.Functor                      (($>))
@@ -138,9 +135,11 @@ instance Show Pattern where show = show . string
 instance Eq Pattern where (==) = (==) `on` string
 
 instance A.FromJSON Pattern where
-  parseJSON = \case
-    A.String string -> fromRight mzero (pure <$> parsePattern (T.unpack string))
-    _               -> mzero
+  parseJSON = A.withText "regex" parse
+    where parse text = case parsePattern $ T.unpack text of
+            Left err  -> fail $ "Invalid regex:\n" <> err
+            Right pat -> pure pat
+
 
 -- | Parse a string into a compiled regular expression ('Pattern').
 --
