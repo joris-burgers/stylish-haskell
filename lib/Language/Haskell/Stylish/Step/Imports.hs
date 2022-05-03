@@ -241,15 +241,21 @@ groupAndFormat
   -> ImportStats
   -> [NonEmpty (GHC.LImportDecl GHC.GhcPs)]
   -> Editor.Edits
-groupAndFormat maxCols options moduleStats groups = edits
-  where edits = Editor.changeLines block (const regroupedLines)
-        regroupedLines =
-          intercalate [""] $
+groupAndFormat _ _ _ [] = mempty
+groupAndFormat maxCols options moduleStats groups =
+  Editor.changeLines block (const regroupedLines)
+  where regroupedLines :: Lines
+        regroupedLines = intercalate [""] $
           map (formatImports maxCols options moduleStats) grouped
 
+        grouped :: [NonEmpty (GHC.LImportDecl GHC.GhcPs)]
         grouped = groupByPatterns (groupPatterns options) imports
+
+        imports :: [GHC.LImportDecl GHC.GhcPs]
         imports = concatMap toList groups
 
+        -- groups is non-empty by the pattern for this case and
+        -- imports is non-empty as long as groups is non-empty
         block = Block
           (GHC.srcSpanStartLine . src $ head imports)
           (GHC.srcSpanEndLine   . src $ last imports)
