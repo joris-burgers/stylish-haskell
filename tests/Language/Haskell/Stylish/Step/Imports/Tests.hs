@@ -1158,7 +1158,11 @@ case43 =
     ]
   where options = defaultOptions
           { groupImports  = True
-          , groupPatterns = ["Project\\.Internal", "Project", "([^.]+)"]
+          , groupPatterns =
+              [ unsafeParsePattern "Project\\.Internal"
+              , unsafeParsePattern "Project"
+              , unsafeParsePattern "([^.]+)"
+              ]
           , importAlign   = None
           , longListAlign = Multiline
           }
@@ -1188,7 +1192,7 @@ case44a =
     ]
   where options = defaultOptions
           { groupImports  = True
-          , groupPatterns = ["Project"]
+          , groupPatterns = [unsafeParsePattern "Project"]
           , importAlign   = None
           }
 
@@ -1221,7 +1225,10 @@ case44b =
     ]
   where options = defaultOptions
           { groupImports  = True
-          , groupPatterns = ["Project", "[^.]+\\.([^.]+)"]
+          , groupPatterns =
+              [ unsafeParsePattern "Project"
+              , unsafeParsePattern "[^.]+\\.([^.]+)"
+              ]
           , importAlign   = None
           }
 
@@ -1251,6 +1258,9 @@ case44c =
     ]
   where options = defaultOptions
           { groupImports  = True
-          , groupPatterns = ["Project", "[^.]+\\.[^.]+"]
+          , groupPatterns =
+              [ unsafeParsePattern "Project"
+              , unsafeParsePattern "[^.]+\\.[^.]+"
+              ]
           , importAlign   = None
           }

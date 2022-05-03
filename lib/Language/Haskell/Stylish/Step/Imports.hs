@@ -16,6 +16,9 @@ module Language.Haskell.Stylish.Step.Imports
   , step
 
   , printImport
+
+  , parsePattern
+  , unsafeParsePattern
   ) where
 
 --------------------------------------------------------------------------------
@@ -34,7 +37,6 @@ import qualified Data.List.NonEmpty                as NonEmpty
 import qualified Data.Map                          as Map
 import           Data.Maybe                        (fromMaybe, isJust)
 import qualified Data.Set                          as Set
-import           Data.String                       (IsString (fromString))
 import qualified Data.Text                         as T
 import qualified GHC.Data.FastString               as GHC
 import qualified GHC.Hs                            as GHC
@@ -84,7 +86,7 @@ defaultOptions = Options
     , spaceSurround   = False
     , postQualified   = False
     , groupImports    = False
-    , groupPatterns   = ["([^.]+)"]
+    , groupPatterns   = [unsafeParsePattern "([^.]+)"]
     }
 
 data ListPadding
@@ -128,18 +130,38 @@ instance Show Pattern where show = show . string
 
 instance Eq Pattern where (==) = (==) `on` string
 
-instance IsString Pattern where
-  fromString = either error id . parsePattern
-
 instance A.FromJSON Pattern where
   parseJSON = \case
     A.String string -> fromRight mzero (pure <$> parsePattern (T.unpack string))
     _               -> mzero
 
+-- | Parse a string into a compiled regular expression ('Pattern').
+--
+-- Returns a human-readable parse error message if the string is not
+-- valid regex syntax.
+--
+-- >>> parsePattern "^([^.]+)"
+-- Right "^([^.]+)"
+--
+-- >>> parsePattern "("
+-- Left "\"(\" (line 1, column 2):\nunexpected end of input\nexpecting empty () or anchor ^ or $ or an atom"
 parsePattern :: String -> Either String Pattern
 parsePattern string = case parseRegex string of
   Right _  -> Right $ Pattern { string, regex = makeRegex string }
   Left err -> Left (show err)
+
+-- | Parse a string into a regular expression, raising a runtime
+-- exception if the string is not valid regex syntax.
+--
+-- >>> unsafeParsePattern "^([^.]+)"
+-- "^([^.]+)"
+--
+-- >>> unsafeParsePattern "("
+-- "*** Exception: "(" (line 1, column 2):
+-- unexpected end of input
+-- expecting empty () or anchor ^ or $ or an atom
+unsafeParsePattern :: String -> Pattern
+unsafeParsePattern = either error id . parsePattern
 
 --------------------------------------------------------------------------------
 step :: Maybe Int -> Options -> Step
