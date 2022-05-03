@@ -253,7 +253,7 @@ groupByPatterns patterns allImports = go patterns allImports []
     capture Pattern { regex } import_ =
       case getAllTextSubmatches $ match regex $ moduleName import_ of
         (_ : s : _) -> map toLower s -- lowercase for case-insensitive sorting
-        _           -> ""            -- all grouped together
+        _           -> ""            -- constant grouping key, so everything will be grouped together
 
     moduleName = importModuleName . GHC.unLoc
 
