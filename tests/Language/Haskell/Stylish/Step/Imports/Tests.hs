@@ -1018,11 +1018,13 @@ case39 = assertSnippet (step Nothing options)
   , "import SomeThing.B"
   , "import SomeThingelse.B"
   ]
-  [ "import           Something.A"
-  , "import           SomeThing.B"
+  [ "import           SomeThing.B"
+  , ""
+  , "import           SomeThingelse.B"
+  , ""
+  , "import           Something.A"
   , ""
   , "import           SomethingElse.A"
-  , "import           SomeThingelse.B"
   ]
   where options = defaultOptions { groupImports = True }
 

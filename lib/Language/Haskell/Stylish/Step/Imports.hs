@@ -23,7 +23,6 @@ module Language.Haskell.Stylish.Step.Imports
 --------------------------------------------------------------------------------
 import           Control.Monad                     (forM_, void, when)
 import qualified Data.Aeson                        as A
-import           Data.Char                         (toLower)
 import           Data.Foldable                     (toList)
 import           Data.Function                     (on, (&))
 import           Data.Functor                      (($>))
@@ -313,8 +312,8 @@ groupByPatterns patterns allImports = toList $ go patterns allImports Seq.empty
     capture :: Pattern -> GHC.LImportDecl GHC.GhcPs -> String
     capture Pattern { regex } import_ =
       case getAllTextSubmatches $ match regex $ moduleName import_ of
-        (_ : s : _) -> map toLower s -- lowercase for case-insensitive sorting
-        _           -> ""            -- constant grouping key, so everything will be grouped together
+        (_ : s : _) -> s
+        _           -> "" -- constant grouping key, so everything will be grouped together
 
     moduleName = importModuleName . GHC.unLoc
 
