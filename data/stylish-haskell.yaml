@@ -324,28 +324,48 @@ steps:
       # Default: false
       group_imports: false
 
-      # A list of regular expressions specifying how to group modules
-      # and how to order the groups.
+      # A list of rules specifying how to group modules and how to
+      # order the groups.
       #
-      # Each pattern defines a single group. An import belongs to the
-      # first group where the pattern matches the name of the module
-      # being imported.
+      # Each rule has a match field; the rule only applies to module
+      # names matched by this pattern.
       #
-      # Example: ["^Test\\.", "^Foo\\."] will put all test imports
-      # into a single group, followed by a group for Foo.*, followed
-      # by anything else. (Note: . in a regular expression matches
-      # *any* character, so we have to escape it with \\ to match the
-      # literal dot in the module name.)
+      # Rules are processed in order, so only the *first* rule that
+      # matches a specific module will apply. Any module names that do
+      # not match a single rule will be put into a single group at the
+      # end of the import block.
       #
-      #  > import Test.Foo.A
-      #  > import Test.Foo.B
-      #  > import Test.Bar
-      #  > import Test.Baz.Qux
+      # Example: group MyApp modules first, with everything else in
+      # one group at the end.
+      #
+      #  group_rules:
+      #    - match: "^MyApp\\>"
+      #
+      #  > import MyApp
+      #  > import MyApp.Foo
       #  >
-      #  > import Foo.A
-      #  > import Foo.B
+      #  > import Control.Monad
+      #  > import MyApps
+      #  > import Test.MyApp
+      #
+      # A rule can also optionally have a sub_group pattern. Import
+      # that match the rule will be broken up into further groups by
+      # the part of the module name matched by the sub_group pattern.
+      #
+      # Example: group MyApp modules first, then everything else
+      # sub-grouped by the first part of the module name.
+      #
+      #  group_rules:
+      #    - match: "^MyApp\\>"
+      #    - match: "."
+      #      sub_group: "^[^.]+"
+      #
+      #  > import MyApp
+      #  > import MyApp.Foo
       #  >
       #  > import Control.Applicative
+      #  > import Control.Monad
+      #  >
       #  > import Data.Map
       #
       # A pattern only needs to match part of the module name, which
@@ -358,34 +378,11 @@ steps:
       #  - "\\.Test$" would match "Foo.Test" but not "Foo.Test.Lib"
       #  - "^Test$" would *only* match "Test"
       #
-      # If a pattern uses a capture group, imports that match the
-      # pattern are broken up into further groups based on the text
-      # captured by the first capture group. Any subsequent capture
-      # groups are ignored. The sub-groups are sorted relative to each
-      # other in alphabetical order by the captured text.
+      # The default is a single rule that matches everything and
+      # sub-groups based on the first component of the module name.
       #
-      # Example: "Test\\.([^.]+)" will produce sub-groups as follows:
-      #
-      #   > import Test.Bar
-      #   >
-      #   > import Test.Baz.Qux
-      #   >
-      #   > import Test.Foo.A
-      #   > import Test.Foo.B
-      #
-      # Note: if a capture group is repeated, only the *last* instance
-      # of the group is captured. This means that "([^.]+\\.)+" will
-      # capture "Bar." out of "Foo.Bar.Baz".
-      #
-      # Any imports that do not match a pattern will be combined at a
-      # group at the end of the import block.
-      #
-      # The default is ["([^.])+"] which means "group everything based
-      # on the first component of the module name" (Control.*
-      # together, Data.* together... etc).
-      #
-      # Default: ["([^.])+"]
-      group_patterns: ["([^.])+"]
+      # Default: { "match" : ".*", "sub_group": "^[^.]+" }
+      group_rules: ["([^.])+"]
 
   # Language pragmas
   - language_pragmas:
