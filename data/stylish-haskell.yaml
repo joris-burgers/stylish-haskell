@@ -381,8 +381,10 @@ steps:
       # The default is a single rule that matches everything and
       # sub-groups based on the first component of the module name.
       #
-      # Default: { "match" : ".*", "sub_group": "^[^.]+" }
-      group_rules: ["([^.])+"]
+      # Default: [{ "match" : ".*", "sub_group": "^[^.]+" }]
+      group_rules:
+        - match: ".*"
+          sub_group: "^[^.]+"
 
   # Language pragmas
   - language_pragmas:

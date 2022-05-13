@@ -1,9 +1,10 @@
-{-# LANGUAGE BlockArguments   #-}
-{-# LANGUAGE DoAndIfThenElse  #-}
-{-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE LambdaCase       #-}
-{-# LANGUAGE NamedFieldPuns   #-}
-{-# LANGUAGE RecordWildCards  #-}
+{-# LANGUAGE BlockArguments    #-}
+{-# LANGUAGE DoAndIfThenElse   #-}
+{-# LANGUAGE FlexibleContexts  #-}
+{-# LANGUAGE LambdaCase        #-}
+{-# LANGUAGE NamedFieldPuns    #-}
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE RecordWildCards   #-}
 module Language.Haskell.Stylish.Step.Imports
   ( Options (..)
   , defaultOptions
@@ -12,6 +13,7 @@ module Language.Haskell.Stylish.Step.Imports
   , LongListAlign (..)
   , EmptyListAlign (..)
   , ListPadding (..)
+  , GroupRule (..)
   , step
 
   , printImport
@@ -43,9 +45,8 @@ import qualified GHC.Types.SourceText              as GHC
 import qualified GHC.Types.SrcLoc                  as GHC
 import qualified GHC.Unit.Module.Name              as GHC
 import qualified GHC.Unit.Types                    as GHC
-import           Text.Regex.TDFA                   (Regex,
-                                                    RegexMaker (makeRegex),
-                                                    getAllTextSubmatches, match)
+import           Text.Regex.TDFA                   (Regex)
+import qualified Text.Regex.TDFA                   as Regex
 import           Text.Regex.TDFA.ReadRegex         (parseRegex)
 
 --------------------------------------------------------------------------------
@@ -69,23 +70,27 @@ data Options = Options
     , spaceSurround  :: Bool
     , postQualified  :: Bool
     , groupImports   :: Bool
-    , groupPatterns  :: [Pattern]
+    , groupRules     :: [GroupRule]
     } deriving (Eq, Show)
 
 defaultOptions :: Options
 defaultOptions = Options
-    { importAlign     = Global
-    , listAlign       = AfterAlias
-    , padModuleNames  = True
-    , longListAlign   = Inline
-    , emptyListAlign  = Inherit
-    , listPadding     = LPConstant 4
-    , separateLists   = True
-    , spaceSurround   = False
-    , postQualified   = False
-    , groupImports    = False
-    , groupPatterns   = [unsafeParsePattern "([^.]+)"]
+    { importAlign    = Global
+    , listAlign      = AfterAlias
+    , padModuleNames = True
+    , longListAlign  = Inline
+    , emptyListAlign = Inherit
+    , listPadding    = LPConstant 4
+    , separateLists  = True
+    , spaceSurround  = False
+    , postQualified  = False
+    , groupImports   = False
+    , groupRules     = [defaultGroupRule]
     }
+  where defaultGroupRule = GroupRule
+          { match    = unsafeParsePattern ".*"
+          , subGroup = Just $ unsafeParsePattern "^[^.]+"
+          }
 
 data ListPadding
     = LPConstant Int
@@ -118,6 +123,27 @@ data LongListAlign
     | InlineToMultiline -- new_line_multiline
     | Multiline -- multiline
     deriving (Eq, Show)
+
+-- | A rule for grouping imports that specifies which module names
+-- belong in a group and (optionally) how to break them up into
+-- sub-groups.
+--
+-- See the documentation for the group_rules setting in
+-- data/stylish-haskell.yaml for more details.
+data GroupRule = GroupRule
+  { match    :: Pattern
+    -- ^ The pattern that determines whether a rule applies to a
+    -- module name.
+  , subGroup :: Maybe Pattern
+    -- ^ An optional pattern for breaking the group up into smaller
+    -- sub-groups.
+  } deriving (Show, Eq)
+
+instance A.FromJSON GroupRule where
+  parseJSON = A.withObject "group_rule" parse
+    where parse o = GroupRule
+                <$> (o A..: "match")
+                <*> (o A..:? "sub_group")
 
 -- | A compiled regular expression. Provides instances that 'Regex'
 -- does not have (eg 'Show', 'Eq' and 'FromJSON').
@@ -154,7 +180,7 @@ instance A.FromJSON Pattern where
 -- Left "\"(\" (line 1, column 2):\nunexpected end of input\nexpecting empty () or anchor ^ or $ or an atom"
 parsePattern :: String -> Either String Pattern
 parsePattern string = case parseRegex string of
-  Right _  -> Right $ Pattern { string, regex = makeRegex string }
+  Right _  -> Right $ Pattern { string, regex = Regex.makeRegex string }
   Left err -> Left (show err)
 
 -- | Parse a string into a regular expression, raising a runtime
@@ -251,7 +277,7 @@ groupAndFormat maxCols options moduleStats groups =
       map (formatImports maxCols options moduleStats) grouped
 
     grouped :: [NonEmpty (GHC.LImportDecl GHC.GhcPs)]
-    grouped = groupByPatterns (groupPatterns options) imports
+    grouped = groupByRules (groupRules options) imports
 
     imports :: [GHC.LImportDecl GHC.GhcPs]
     imports = concatMap toList groups
@@ -269,51 +295,50 @@ groupAndFormat maxCols options moduleStats groups =
 -- See the documentation for @group_patterns@ in
 -- @data/stylish-haskell.yaml@ for details about the patterns and
 -- grouping logic.
-groupByPatterns
-  :: [Pattern]
+groupByRules
+  :: [GroupRule]
   -- ^ The patterns specifying the groups to build. Order matters:
   -- earlier patterns take precedence over later ones.
   -> [GHC.LImportDecl GHC.GhcPs]
   -- ^ The imports to group. Order does not matter.
   -> [NonEmpty (GHC.LImportDecl GHC.GhcPs)]
-groupByPatterns patterns allImports = toList $ go patterns allImports Seq.empty
+groupByRules rules allImports = toList $ go rules allImports Seq.empty
   where
-    go :: [Pattern]
+    go :: [GroupRule]
        -> [GHC.LImportDecl GHC.GhcPs]
        -> Seq (NonEmpty (GHC.LImportDecl GHC.GhcPs))
        -> Seq (NonEmpty (GHC.LImportDecl GHC.GhcPs))
     go [] [] groups            = groups
     go [] imports groups       = groups :|> NonEmpty.fromList imports
-    go (p : ps) imports groups =
+    go (r : rs) imports groups =
       let
-        (groups', rest) = extract p imports
+        (groups', rest) = extract r imports
       in
-        go ps rest (groups <> groups')
+        go rs rest (groups <> groups')
 
-    extract :: Pattern
+    extract :: GroupRule
             -> [GHC.LImportDecl GHC.GhcPs]
             -> ( Seq (NonEmpty (GHC.LImportDecl GHC.GhcPs))
                , [GHC.LImportDecl GHC.GhcPs]
                )
-    extract p imports =
+    extract GroupRule { match, subGroup } imports =
       let
-        (matched, rest) =
-          partition (matches p) imports
-        subgroups =
-          groupBy ((==) `on` capture p) $ sortOn (capture p) matched
+        (matched, rest) = partition (matches match) imports
+        subgroups = groupBy ((==) `on` firstMatch subGroup) $
+                      sortOn (firstMatch subGroup) matched
       in
         -- groupBy never produces empty groups, so this mapMaybe will
         -- not discard anything from subgroups
         (Seq.fromList $ mapMaybe NonEmpty.nonEmpty subgroups, rest)
 
     matches :: Pattern -> GHC.LImportDecl GHC.GhcPs -> Bool
-    matches Pattern { regex } import_ = match regex $ moduleName import_
+    matches Pattern { regex } import_ = Regex.match regex $ moduleName import_
 
-    capture :: Pattern -> GHC.LImportDecl GHC.GhcPs -> String
-    capture Pattern { regex } import_ =
-      case getAllTextSubmatches $ match regex $ moduleName import_ of
-        (_ : s : _) -> s
-        _           -> "" -- constant grouping key, so everything will be grouped together
+    firstMatch :: Maybe Pattern -> GHC.LImportDecl GHC.GhcPs -> String
+    firstMatch (Just Pattern { regex }) import_ =
+      Regex.match regex $ moduleName import_
+    firstMatch Nothing _ =
+      "" -- constant grouping key, so everything will be grouped together
 
     moduleName = importModuleName . GHC.unLoc
 

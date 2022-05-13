@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 --------------------------------------------------------------------------------
-{-# LANGUAGE OverloadedLists #-}
+{-# LANGUAGE OverloadedLists   #-}
 module Language.Haskell.Stylish.Step.Imports.Tests
     ( tests
     ) where
@@ -1160,10 +1160,19 @@ case43 =
     ]
   where options = defaultOptions
           { groupImports  = True
-          , groupPatterns =
-              [ unsafeParsePattern "Project\\.Internal"
-              , unsafeParsePattern "Project"
-              , unsafeParsePattern "([^.]+)"
+          , groupRules    =
+              [ GroupRule
+                { match = unsafeParsePattern "Project\\.Internal"
+                , subGroup = Nothing
+                }
+              , GroupRule
+                { match = unsafeParsePattern "Project"
+                , subGroup = Nothing
+                }
+              , GroupRule
+                { match = unsafeParsePattern ".*"
+                , subGroup = Just $ unsafeParsePattern "^[^.]+"
+                }
               ]
           , importAlign   = None
           , longListAlign = Multiline
@@ -1193,9 +1202,13 @@ case44a =
     , "import ProJect.WrongCapitalization"
     ]
   where options = defaultOptions
-          { groupImports  = True
-          , groupPatterns = [unsafeParsePattern "Project"]
-          , importAlign   = None
+          { groupImports = True
+          , groupRules   = [ GroupRule
+                             { match = unsafeParsePattern "Project"
+                             , subGroup = Nothing
+                             }
+                           ]
+          , importAlign  = None
           }
 
 --------------------------------------------------------------------------------
@@ -1226,12 +1239,18 @@ case44b =
     , "import ProJect.WrongCapitalization"
     ]
   where options = defaultOptions
-          { groupImports  = True
-          , groupPatterns =
-              [ unsafeParsePattern "Project"
-              , unsafeParsePattern "[^.]+\\.([^.]+)"
+          { groupImports = True
+          , groupRules   =
+              [ GroupRule
+                { match = unsafeParsePattern "Project"
+                , subGroup = Nothing
+                }
+              , GroupRule
+                { match    = unsafeParsePattern "[^.]+\\.[^.]+"
+                , subGroup = Just $ unsafeParsePattern "\\.[^.]+"
+                }
               ]
-          , importAlign   = None
+          , importAlign  = None
           }
 
 
@@ -1259,10 +1278,16 @@ case44c =
     , "import ProJect.WrongCapitalization"
     ]
   where options = defaultOptions
-          { groupImports  = True
-          , groupPatterns =
-              [ unsafeParsePattern "Project"
-              , unsafeParsePattern "[^.]+\\.[^.]+"
+          { groupImports = True
+          , groupRules   =
+              [ GroupRule
+                { match = unsafeParsePattern "Project"
+                , subGroup = Nothing
+                }
+              , GroupRule
+                { match = unsafeParsePattern "[^.]+\\.[^.]+"
+                , subGroup = Nothing
+                }
               ]
-          , importAlign   = None
+          , importAlign  = None
           }
