@@ -328,7 +328,7 @@ steps:
       # order the groups.
       #
       # Each rule has a match field; the rule only applies to module
-      # names matched by this pattern.
+      # names matched by this regex pattern.
       #
       # Rules are processed in order, so only the *first* rule that
       # matches a specific module will apply. Any module names that do
