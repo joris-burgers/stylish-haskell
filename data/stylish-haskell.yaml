@@ -328,7 +328,10 @@ steps:
       # order the groups.
       #
       # Each rule has a match field; the rule only applies to module
-      # names matched by this regex pattern.
+      # names matched by this pattern. Patterns are POSIX extended
+      # regular expressions; see the documentation of Text.Regex.TDFA
+      # for details:
+      # https://hackage.haskell.org/package/regex-tdfa-1.3.1.2/docs/Text-Regex-TDFA.html
       #
       # Rules are processed in order, so only the *first* rule that
       # matches a specific module will apply. Any module names that do
