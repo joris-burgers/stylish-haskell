@@ -348,7 +348,7 @@ steps:
       #  > import MyApps
       #  > import Test.MyApp
       #
-      # A rule can also optionally have a sub_group pattern. Import
+      # A rule can also optionally have a sub_group pattern. Imports
       # that match the rule will be broken up into further groups by
       # the part of the module name matched by the sub_group pattern.
       #
