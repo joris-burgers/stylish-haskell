@@ -378,6 +378,13 @@ steps:
       #  - "\\.Test$" would match "Foo.Test" but not "Foo.Test.Lib"
       #  - "^Test$" would *only* match "Test"
       #
+      # You can use \\< and \\> to anchor against the beginning and
+      # end of words, respectively. For example:
+      #
+      #  - "^Test\\." would match "Test.Foo" but not "Test" or "Tests"
+      #  - "^Test\\>" would match "Test.Foo" and "Test", but not
+      #    "Tests"
+      #
       # The default is a single rule that matches everything and
       # sub-groups based on the first component of the module name.
       #
