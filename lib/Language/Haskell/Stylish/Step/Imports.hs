@@ -339,9 +339,9 @@ groupByRules rules allImports = toList $ go rules allImports Seq.empty
             -> ( Seq (NonEmpty (GHC.LImportDecl GHC.GhcPs))
                , [GHC.LImportDecl GHC.GhcPs]
                )
-    extract GroupRule { match, subGroup } imports =
+    extract GroupRule { match, subGroup, matchQualified } imports =
       let
-        (matched, rest) = partition (matches match) imports
+        (matched, rest) = partition (matches matchQualified match) imports
         subgroups = groupBy ((==) `on` firstMatch subGroup) $
                       sortOn (firstMatch subGroup) matched
       in
@@ -349,8 +349,13 @@ groupByRules rules allImports = toList $ go rules allImports Seq.empty
         -- not discard anything from subgroups
         (Seq.fromList $ mapMaybe NonEmpty.nonEmpty subgroups, rest)
 
-    matches :: Pattern -> GHC.LImportDecl GHC.GhcPs -> Bool
-    matches Pattern { regex } import_ = Regex.match regex $ moduleName import_
+    matches :: MatchQualified -> Pattern -> GHC.LImportDecl GHC.GhcPs -> Bool
+    matches desiredQualified (Pattern { regex }) import_ = matchesQualified && Regex.match regex (moduleName import_)
+      where
+        matchesQualified = case desiredQualified of
+          OnlyQualified -> isQualified (GHC.unLoc import_)
+          NotQualified -> not $ isQualified (GHC.unLoc import_)
+          IgnoreQualification -> True
 
     firstMatch :: Maybe Pattern -> GHC.LImportDecl GHC.GhcPs -> String
     firstMatch (Just Pattern { regex }) import_ =

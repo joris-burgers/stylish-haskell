@@ -79,6 +79,10 @@ tests = testGroup "Language.Haskell.Stylish.Step.Imports.Tests"
     , testCase "case 44a" case44a
     , testCase "case 44b" case44b
     , testCase "case 44c" case44c
+    , testCase "case 45a" case45a
+    , testCase "case 45b" case45b
+    , testCase "case 45c" case45c
+    , testCase "case 45d" case45d
     ]
 
 
@@ -1295,6 +1299,168 @@ case44c =
                 { match = unsafeParsePattern "[^.]+\\.[^.]+"
                 , subGroup = Nothing
                 , matchQualified = IgnoreQualification
+                }
+              ]
+          , importAlign  = None
+          }
+
+
+--------------------------------------------------------------------------------
+case45a :: Assertion
+case45a =
+    assertSnippet (step (Just 80) options)
+    [ "import Project"
+    , "import Control.Monad"
+    , ""
+    , "import qualified Data.Acid as Acid"
+    , "import Project.Something"
+    , "import Data.Default.Class (Default (def))"
+    , ""
+    , "import qualified Herp.Derp.Internal.Types.Foobar as Internal (foo, bar)"
+    , "import ProJect.WrongCapitalization"
+    ]
+    [ "import Project"
+    , "import Project.Something"
+    , ""
+    , "import Control.Monad"
+    , "import Data.Default.Class (Default (def))"
+    , "import ProJect.WrongCapitalization"
+    , ""
+    , "import qualified Data.Acid as Acid"
+    , "import qualified Herp.Derp.Internal.Types.Foobar as Internal (bar, foo)"
+    ]
+  where options = defaultOptions
+          { groupImports = True
+          , groupRules   =
+              [ GroupRule
+                { match = unsafeParsePattern "Project"
+                , subGroup = Nothing
+                , matchQualified = IgnoreQualification
+                }
+              , GroupRule
+                { match = unsafeParsePattern "[^.]+\\.[^.]+"
+                , subGroup = Nothing
+                , matchQualified = NotQualified
+                }
+              , GroupRule
+                { match = unsafeParsePattern "[^.]+\\.[^.]+"
+                , subGroup = Nothing
+                , matchQualified = OnlyQualified
+                }
+              ]
+          , importAlign  = None
+          }
+
+--------------------------------------------------------------------------------
+case45b :: Assertion
+case45b =
+    assertSnippet (step (Just 80) options)
+    [ "import Project"
+    , "import Control.Monad"
+    , ""
+    , "import qualified Data.Acid as Acid"
+    , "import Project.Something"
+    , "import Data.Default.Class (Default (def))"
+    , ""
+    , "import qualified Herp.Derp.Internal.Types.Foobar as Internal (foo, bar)"
+    , "import ProJect.WrongCapitalization"
+    ]
+    [ "import Project"
+    , "import Project.Something"
+    , ""
+    , "import qualified Data.Acid as Acid"
+    , "import qualified Herp.Derp.Internal.Types.Foobar as Internal (bar, foo)"
+    , ""
+    , "import Control.Monad"
+    , "import Data.Default.Class (Default (def))"
+    , "import ProJect.WrongCapitalization"
+    ]
+  where options = defaultOptions
+          { groupImports = True
+          , groupRules   =
+              [ GroupRule
+                { match = unsafeParsePattern "Project"
+                , subGroup = Nothing
+                , matchQualified = IgnoreQualification
+                }
+              , GroupRule
+                { match = unsafeParsePattern "[^.]+\\.[^.]+"
+                , subGroup = Nothing
+                , matchQualified = OnlyQualified
+                }
+              , GroupRule
+                { match = unsafeParsePattern "[^.]+\\.[^.]+"
+                , subGroup = Nothing
+                , matchQualified = NotQualified
+                }
+              ]
+          , importAlign  = None
+          }
+
+--------------------------------------------------------------------------------
+case45c :: Assertion
+case45c =
+    assertSnippet (step (Just 80) options)
+    [ "import Project"
+    , "import Control.Monad"
+    , ""
+    , "import qualified Data.Acid as Acid"
+    , "import Project.Something"
+    , "import Data.Default.Class (Default (def))"
+    , ""
+    , "import qualified Herp.Derp.Internal.Types.Foobar as Internal (foo, bar)"
+    , "import ProJect.WrongCapitalization"
+    ]
+    [ "import Control.Monad"
+    , "import qualified Data.Acid as Acid"
+    , "import Data.Default.Class (Default (def))"
+    , "import qualified Herp.Derp.Internal.Types.Foobar as Internal (bar, foo)"
+    , "import Project"
+    , "import Project.Something"
+    , "import ProJect.WrongCapitalization"
+    ]
+  where options = defaultOptions
+          { groupImports = True
+          , groupRules   =
+              [ GroupRule
+                { match = unsafeParsePattern "Project"
+                , subGroup = Nothing
+                , matchQualified = OnlyQualified
+                }
+              ]
+          , importAlign  = None
+          }
+
+--------------------------------------------------------------------------------
+case45d :: Assertion
+case45d =
+    assertSnippet (step (Just 80) options)
+    [ "import Project"
+    , "import Control.Monad"
+    , ""
+    , "import qualified Data.Acid as Acid"
+    , "import Project.Something"
+    , "import Data.Default.Class (Default (def))"
+    , ""
+    , "import qualified Herp.Derp.Internal.Types.Foobar as Internal (foo, bar)"
+    , "import qualified ProJect.WrongCapitalization"
+    ]
+    [ "import Project"
+    , "import Project.Something"
+    , ""
+    , "import Control.Monad"
+    , "import qualified Data.Acid as Acid"
+    , "import Data.Default.Class (Default (def))"
+    , "import qualified Herp.Derp.Internal.Types.Foobar as Internal (bar, foo)"
+    , "import qualified ProJect.WrongCapitalization"
+    ]
+  where options = defaultOptions
+          { groupImports = True
+          , groupRules   =
+              [ GroupRule
+                { match = unsafeParsePattern "Project"
+                , subGroup = Nothing
+                , matchQualified = NotQualified
                 }
               ]
           , importAlign  = None
