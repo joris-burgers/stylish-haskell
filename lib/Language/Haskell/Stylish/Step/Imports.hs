@@ -14,6 +14,7 @@ module Language.Haskell.Stylish.Step.Imports
   , EmptyListAlign (..)
   , ListPadding (..)
   , GroupRule (..)
+  , MatchQualified (..)
   , step
 
   , printImport
@@ -90,6 +91,7 @@ defaultOptions = Options
   where defaultGroupRule = GroupRule
           { match    = unsafeParsePattern ".*"
           , subGroup = Just $ unsafeParsePattern "^[^.]+"
+          , matchQualified = IgnoreQualification
           }
 
 data ListPadding
@@ -124,6 +126,19 @@ data LongListAlign
     | Multiline -- multiline
     deriving (Eq, Show)
 
+data MatchQualified
+    = OnlyQualified
+    | NotQualified
+    | IgnoreQualification
+    deriving (Eq, Show)
+
+instance A.FromJSON MatchQualified where
+  parseJSON = A.withText "match_qualified" parse
+    where parse "only_qualified" = pure OnlyQualified
+          parse "not_qualified" = pure NotQualified
+          parse "ignore_qualification" = pure IgnoreQualification
+          parse _ = fail "Could not parse the provided value for match_qualified"
+
 -- | A rule for grouping imports that specifies which module names
 -- belong in a group and (optionally) how to break them up into
 -- sub-groups.
@@ -137,6 +152,8 @@ data GroupRule = GroupRule
   , subGroup :: Maybe Pattern
     -- ^ An optional pattern for breaking the group up into smaller
     -- sub-groups.
+  , matchQualified :: MatchQualified
+    -- ^ Whether a qualified import is matched by this rule.
   } deriving (Show, Eq)
 
 instance A.FromJSON GroupRule where
@@ -144,6 +161,7 @@ instance A.FromJSON GroupRule where
     where parse o = GroupRule
                 <$> (o A..: "match")
                 <*> (o A..:? "sub_group")
+                <*> (o A..:? "match_qualified") A..!= IgnoreQualification
 
 -- | A compiled regular expression. Provides instances that 'Regex'
 -- does not have (eg 'Show', 'Eq' and 'FromJSON').

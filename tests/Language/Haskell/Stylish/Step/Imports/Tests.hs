@@ -1164,14 +1164,17 @@ case43 =
               [ GroupRule
                 { match = unsafeParsePattern "Project\\.Internal"
                 , subGroup = Nothing
+                , matchQualified = IgnoreQualification
                 }
               , GroupRule
                 { match = unsafeParsePattern "Project"
                 , subGroup = Nothing
+                , matchQualified = IgnoreQualification
                 }
               , GroupRule
                 { match = unsafeParsePattern ".*"
                 , subGroup = Just $ unsafeParsePattern "^[^.]+"
+                , matchQualified = IgnoreQualification
                 }
               ]
           , importAlign   = None
@@ -1206,6 +1209,7 @@ case44a =
           , groupRules   = [ GroupRule
                              { match = unsafeParsePattern "Project"
                              , subGroup = Nothing
+                             , matchQualified = IgnoreQualification
                              }
                            ]
           , importAlign  = None
@@ -1244,10 +1248,12 @@ case44b =
               [ GroupRule
                 { match = unsafeParsePattern "Project"
                 , subGroup = Nothing
+                , matchQualified = IgnoreQualification
                 }
               , GroupRule
                 { match    = unsafeParsePattern "[^.]+\\.[^.]+"
                 , subGroup = Just $ unsafeParsePattern "\\.[^.]+"
+                , matchQualified = IgnoreQualification
                 }
               ]
           , importAlign  = None
@@ -1283,10 +1289,12 @@ case44c =
               [ GroupRule
                 { match = unsafeParsePattern "Project"
                 , subGroup = Nothing
+                , matchQualified = IgnoreQualification
                 }
               , GroupRule
                 { match = unsafeParsePattern "[^.]+\\.[^.]+"
                 , subGroup = Nothing
+                , matchQualified = IgnoreQualification
                 }
               ]
           , importAlign  = None
