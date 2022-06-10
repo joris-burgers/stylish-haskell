@@ -289,6 +289,7 @@ parseImports config o = fmap (Imports.step columns) $ Imports.Options
       <*> o A..:? "post_qualify" A..!= def Imports.postQualified
       <*> o A..:? "group_imports" A..!= def Imports.groupImports
       <*> o A..:? "group_rules" A..!= def Imports.groupRules
+      <*> o A..:? "group_reverse" A..!= def Imports.groupReverse
   where
     def f = f Imports.defaultOptions
 

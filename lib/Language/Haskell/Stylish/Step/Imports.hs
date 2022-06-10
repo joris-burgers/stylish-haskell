@@ -72,6 +72,7 @@ data Options = Options
     , postQualified  :: Bool
     , groupImports   :: Bool
     , groupRules     :: [GroupRule]
+    , groupReverse   :: Bool
     } deriving (Eq, Show)
 
 defaultOptions :: Options
@@ -87,6 +88,7 @@ defaultOptions = Options
     , postQualified  = False
     , groupImports   = False
     , groupRules     = [defaultGroupRule]
+    , groupReverse   = False
     }
   where defaultGroupRule = GroupRule
           { match    = unsafeParsePattern ".*"
@@ -296,7 +298,7 @@ groupAndFormat maxCols options moduleStats groups =
       map (formatImports maxCols options moduleStats) grouped
 
     grouped :: [NonEmpty (GHC.LImportDecl GHC.GhcPs)]
-    grouped = groupByRules (groupRules options) imports
+    grouped = groupByRules (groupReverse options) (groupRules options) imports
 
     imports :: [GHC.LImportDecl GHC.GhcPs]
     imports = concatMap toList groups
@@ -315,13 +317,15 @@ groupAndFormat maxCols options moduleStats groups =
 -- @data/stylish-haskell.yaml@ for details about the patterns and
 -- grouping logic.
 groupByRules
-  :: [GroupRule]
+  :: Bool
+  -- ^ Whether we need to reverse the groups
+  -> [GroupRule]
   -- ^ The patterns specifying the groups to build. Order matters:
   -- earlier patterns take precedence over later ones.
   -> [GHC.LImportDecl GHC.GhcPs]
   -- ^ The imports to group. Order does not matter.
   -> [NonEmpty (GHC.LImportDecl GHC.GhcPs)]
-groupByRules rules allImports = toList $ go rules allImports Seq.empty
+groupByRules needReverse rules allImports = possiblyReverse $ toList $ go rules allImports Seq.empty
   where
     go :: [GroupRule]
        -> [GHC.LImportDecl GHC.GhcPs]
@@ -366,6 +370,7 @@ groupByRules rules allImports = toList $ go rules allImports Seq.empty
 
     moduleName = importModuleName . GHC.unLoc
 
+    possiblyReverse = if needReverse then reverse else id
 
 --------------------------------------------------------------------------------
 printQualified

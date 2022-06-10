@@ -423,6 +423,12 @@ steps:
         - match: ".*"
           sub_group: "^[^.]+"
           match_qualified: ignore_qualification
+      # Reverse the order of groups after all the rules are applied. The rules are applied in order
+      # but the resulting groups are reversed after being grouped. The order within a single group
+      # is unaffected.
+      #
+      # Default: false
+      group_reverse: false
 
   # Language pragmas
   - language_pragmas:

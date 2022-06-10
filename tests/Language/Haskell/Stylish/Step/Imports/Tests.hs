@@ -85,6 +85,7 @@ tests = testGroup "Language.Haskell.Stylish.Step.Imports.Tests"
     , testCase "case 45d" case45d
     , testCase "case 46a" case46a
     , testCase "case 46b" case46b
+    , testCase "case47" case47
     ]
 
 
@@ -1557,4 +1558,54 @@ case46b =
                 }
               ]
           , importAlign  = None
+          }
+
+--------------------------------------------------------------------------------
+case47 :: Assertion
+case47 =
+    assertSnippet (step (Just 80) options)
+    [ "import Project"
+    , "import Control.Monad"
+    , ""
+    , "import qualified Data.Acid as Acid"
+    , "import Project.Something"
+    , "import Data.Default.Class (Default (def))"
+    , ""
+    , "import qualified Herp.Derp.Internal.Types.Foobar as Internal (foo, bar)"
+    , "import ProJect.WrongCapitalization"
+    ]
+    [ "import ProJect.WrongCapitalization"
+    , ""
+    , "import Control.Monad"
+    , ""
+    , "import Data.Default.Class (Default (def))"
+    , ""
+    , "import qualified Herp.Derp.Internal.Types.Foobar as Internal (bar, foo)"
+    , ""
+    , "import qualified Data.Acid as Acid"
+    , ""
+    , "import Project"
+    , "import Project.Something"
+    ]
+  where options = defaultOptions
+          { groupImports = True
+          , groupRules   =
+              [ GroupRule
+                { match = unsafeParsePattern "Project"
+                , subGroup = Nothing
+                , matchQualified = IgnoreQualification
+                }
+              , GroupRule
+                { match    = unsafeParsePattern "[^.]+\\.[^.]+"
+                , subGroup = Just $ unsafeParsePattern "\\.[^.]+"
+                , matchQualified = OnlyQualified
+                }
+              , GroupRule
+                { match    = unsafeParsePattern "[^.]+\\.[^.]+"
+                , subGroup = Just $ unsafeParsePattern "\\.[^.]+"
+                , matchQualified = NotQualified
+                }
+              ]
+          , importAlign  = None
+          , groupReverse = True
           }
