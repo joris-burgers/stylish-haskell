@@ -137,7 +137,8 @@ instance A.FromJSON MatchQualified where
     where parse "only_qualified" = pure OnlyQualified
           parse "not_qualified" = pure NotQualified
           parse "ignore_qualification" = pure IgnoreQualification
-          parse _ = fail "Could not parse the provided value for match_qualified"
+          parse k = fail $ "Unknown option: " ++ show k ++ ", should be one of: " ++
+            "only_qualified, not_qualified, ignore_qualification"
 
 -- | A rule for grouping imports that specifies which module names
 -- belong in a group and (optionally) how to break them up into

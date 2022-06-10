@@ -391,10 +391,38 @@ steps:
       # The default is a single rule that matches everything and
       # sub-groups based on the first component of the module name.
       #
-      # Default: [{ "match" : ".*", "sub_group": "^[^.]+" }]
+      # It is also possible to specify whether a group matches qualified imports or not.
+      #
+      # - ignore_qualification: Whether or not an import is qualified doesn't matter
+      #
+      # - only_qualified: Only match qualified imports
+      #
+      # - not_qualified: Only match imports that aren't qualified
+      #
+      # Example: First import any non-qualified imports
+      #  group_rules:
+      #    - match: "^MyApp\\>"
+      #      match_qualified: not_qualified
+      #    - match: "^MyApp\\>"
+      #      match_qualified: only_qualified
+      #    - match: "."
+      #      sub_group: "^[^.]+"
+      #
+      #  > import MyApp
+      #  > import MyApp.Foo
+      #  >
+      #  > import qualified MyApp.Bar
+      #  >
+      #  > import Control.Applicative
+      #  > import Control.Monad
+      #  >
+      #  > import Data.Map
+      #
+      # Default: [{ "match" : ".*", "sub_group": "^[^.]+", match_qualified: ignore_qualification }]
       group_rules:
         - match: ".*"
           sub_group: "^[^.]+"
+          match_qualified: ignore_qualification
 
   # Language pragmas
   - language_pragmas:
